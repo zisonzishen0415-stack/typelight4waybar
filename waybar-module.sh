@@ -21,18 +21,19 @@ while true; do
     pos=$((pos % 3))
     case $pos in 0) pattern="● ○ ○"; ;; 1) pattern="○ ● ○"; ;; 2) pattern="○ ○ ●"; ;; esac
 
+    color_idx=$((color_idx % NUM_COLORS))
+
     if [ "$last" != "0" ]; then
         diff=$(( (now - last) / 1000000 ))
         if [ "$diff" -lt 100 ]; then
-            # 打字时：实心方框 + 彩色（只读取，不自增）
-            color_idx=$((color_idx % NUM_COLORS))
-            printf '{"text":"■  %d  %s","class":"c%d"}\n' "$count" "$pattern" "$color_idx"
+            # 打字时：实心方框 + 明亮颜色
+            printf '{"text":"■  %d  %s","class":"t%d"}\n' "$count" "$pattern" "$color_idx"
         else
-            # 不打字：空心方框 + 灰色
-            printf '{"text":"□  %d  %s","class":"idle"}\n' "$count" "$pattern"
+            # 不打字：空心方框 + 暗淡颜色
+            printf '{"text":"□  %d  %s","class":"i%d"}\n' "$count" "$pattern" "$color_idx"
         fi
     else
-        printf '{"text":"□  %d  %s","class":"idle"}\n' "$count" "$pattern"
+        printf '{"text":"□  %d  %s","class":"i%d"}\n' "$count" "$pattern" "$color_idx"
     fi
 
     sleep 0.03
