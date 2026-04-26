@@ -1,0 +1,17 @@
+#!/bin/bash
+LED="/sys/class/leds/tpacpi::power/brightness"
+OFF="0"
+ON="255"
+
+trap "echo $OFF > $LED; exit" INT TERM EXIT
+
+KEYBOARD=$(ls /dev/input/by-path/*kbd* 2>/dev/null | head -1)
+[ -z "$KEYBOARD" ] && echo "No keyboard found" && exit 1
+
+evtest "$KEYBOARD" 2>/dev/null | grep --line-buffered "type 1 (EV_KEY)" | while read -r line; do
+    if [[ "$line" == *"value 1"* ]]; then
+        echo $ON > $LED
+        sleep 0.03
+        echo $OFF > $LED
+    fi
+done
