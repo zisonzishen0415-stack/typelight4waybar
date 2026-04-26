@@ -1,44 +1,39 @@
 #!/bin/bash
-STATE_FILE="/tmp/typelight-time"
+TIME_FILE="/tmp/typelight-time"
 COUNT_FILE="/tmp/typelight-count"
 POS_FILE="/tmp/typelight-pos"
-TYPING_TIMEOUT=0.3  # 300ms 无按键则认为停止打字
+COLOR_FILE="/tmp/typelight-color"
 
 [ ! -f "$COUNT_FILE" ] && echo 0 > "$COUNT_FILE"
 [ ! -f "$POS_FILE" ] && echo 0 > "$POS_FILE"
+[ ! -f "$TIME_FILE" ] && echo 0 > "$TIME_FILE"
+[ ! -f "$COLOR_FILE" ] && echo 0 > "$COLOR_FILE"
+
+NUM_COLORS=64
 
 while true; do
     count=$(cat "$COUNT_FILE" 2>/dev/null || echo 0)
     pos=$(cat "$POS_FILE" 2>/dev/null || echo 0)
+    last=$(cat "$TIME_FILE" 2>/dev/null || echo 0)
+    color_idx=$(cat "$COLOR_FILE" 2>/dev/null || echo 0)
+    now=$(date +%s%N)
 
     pos=$((pos % 3))
+    case $pos in 0) pattern="● ○ ○"; ;; 1) pattern="○ ● ○"; ;; 2) pattern="○ ○ ●"; ;; esac
 
-    # 检查是否正在打字
-    is_typing=false
-    if [ -f "$STATE_FILE" ]; then
-        last_time=$(cat "$STATE_FILE")
-        current_time=$(date +%s%N)
-        diff=$(( (current_time - last_time) / 1000000 ))  # 转换为毫秒
-        if [ "$diff" -lt 300 ]; then  # 300ms内有按键
-            is_typing=true
+    if [ "$last" != "0" ]; then
+        diff=$(( (now - last) / 1000000 ))
+        if [ "$diff" -lt 100 ]; then
+            # 打字时：实心方框 + 彩色（只读取，不自增）
+            color_idx=$((color_idx % NUM_COLORS))
+            printf '{"text":"■  %d  %s","class":"c%d"}\n' "$count" "$pattern" "$color_idx"
+        else
+            # 不打字：空心方框 + 灰色
+            printf '{"text":"□  %d  %s","class":"idle"}\n' "$count" "$pattern"
         fi
-    fi
-
-    case $pos in
-        0) pattern="● ○ ○"; ;;
-        1) pattern="○ ● ○"; ;;
-        2) pattern="○ ○ ●"; ;;
-    esac
-
-    # 方框状态：打字时高亮，不打字时灰色
-    if [ "$is_typing" = true ]; then
-        box="▣"
-        css_class="typing"
     else
-        box="▢"
-        css_class="idle"
+        printf '{"text":"□  %d  %s","class":"idle"}\n' "$count" "$pattern"
     fi
 
-    printf '{"text":"%s  %d  %s","class":"%s"}\n' "$box" "$count" "$pattern" "$css_class" 2>/dev/null || exit 0
-    sleep 0.1
+    sleep 0.03
 done

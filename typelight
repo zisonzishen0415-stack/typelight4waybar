@@ -2,6 +2,7 @@
 STATE_FILE="/tmp/typelight-time"
 COUNT_FILE="/tmp/typelight-count"
 POS_FILE="/tmp/typelight-pos"
+COLOR_FILE="/tmp/typelight-color"
 KEYBOARD=$(ls /dev/input/by-path/*kbd* 2>/dev/null | head -1)
 
 [ -z "$KEYBOARD" ] && exit 1
@@ -16,5 +17,8 @@ evtest "$KEYBOARD" 2>/dev/null | grep --line-buffered "EV_KEY" | while read -r l
         # 更新波纹位置
         pos=$(cat "$POS_FILE" 2>/dev/null || echo 0)
         echo $((pos + 1)) > "$POS_FILE"
+        # 更新颜色索引
+        color=$(cat "$COLOR_FILE" 2>/dev/null || echo 0)
+        echo $((color + 1)) > "$COLOR_FILE"
     fi
 done
