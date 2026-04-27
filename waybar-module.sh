@@ -3,6 +3,18 @@ TIME_FILE="/tmp/typelight-time"
 COUNT_FILE="$HOME/.cache/typelight-count"
 POS_FILE="/tmp/typelight-pos"
 COLOR_FILE="/tmp/typelight-color"
+LOCK_FILE="/tmp/typelight-waybar.lock"
+
+# Single instance lock
+exec 200>"$LOCK_FILE"
+flock -n 200 || exit 0
+
+cleanup() {
+    flock -u 200
+    rm -f "$LOCK_FILE"
+    exit 0
+}
+trap cleanup INT TERM EXIT
 
 [ ! -f "$COUNT_FILE" ] && echo 0 > "$COUNT_FILE"
 [ ! -f "$POS_FILE" ] && echo 0 > "$POS_FILE"
