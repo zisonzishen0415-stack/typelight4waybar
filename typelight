@@ -1,22 +1,36 @@
 #!/bin/bash
 LED="/sys/class/leds/tpacpi::power/brightness"
 STATE_FILE="/tmp/typelight-time"
-COUNT_FILE="/tmp/typelight-count"
+COUNT_FILE="$HOME/.cache/typelight-count"
 POS_FILE="/tmp/typelight-pos"
 COLOR_FILE="/tmp/typelight-color"
+LOCK_FILE="/tmp/typelight.lock"
 KEYBOARD=$(ls /dev/input/by-path/*kbd* 2>/dev/null | head -1)
 
 [ -z "$KEYBOARD" ] && exit 1
-trap "echo 0 > $LED; rm -f $STATE_FILE; exit" INT TERM EXIT
+
+exec 200>"$LOCK_FILE"
+flock -n 200 || exit 0
+
+cleanup() {
+    echo 0 > "$LED"
+    rm -f "$STATE_FILE"
+    flock -u 200
+    rm -f "$LOCK_FILE"
+    exit 0
+}
+
+trap cleanup INT TERM EXIT
+
+mkdir -p "$HOME/.cache"
+[ ! -f "$COUNT_FILE" ] && echo 0 > "$COUNT_FILE"
 
 evtest "$KEYBOARD" 2>/dev/null | grep --line-buffered "EV_KEY" | while read -r line; do
     if [[ "$line" == *"value 1"* ]]; then
-        # LED 闪烁
         echo 255 > "$LED"
         sleep 0.03
         echo 0 > "$LED"
 
-        # Waybar 状态文件
         date +%s%N > "$STATE_FILE"
         count=$(cat "$COUNT_FILE" 2>/dev/null || echo 0)
         echo $((count + 1)) > "$COUNT_FILE"

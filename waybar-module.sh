@@ -1,6 +1,6 @@
 #!/bin/bash
 TIME_FILE="/tmp/typelight-time"
-COUNT_FILE="/tmp/typelight-count"
+COUNT_FILE="$HOME/.cache/typelight-count"
 POS_FILE="/tmp/typelight-pos"
 COLOR_FILE="/tmp/typelight-color"
 
