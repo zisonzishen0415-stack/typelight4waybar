@@ -11,12 +11,20 @@ COLOR_FILE="/tmp/typelight-color"
 
 NUM_COLORS=64
 
+# Cache values to detect changes (avoid unnecessary output)
+last_count=0
+last_pos=0
+last_output=""
+
 while true; do
-    count=$(cat "$COUNT_FILE" 2>/dev/null || echo 0)
-    pos=$(cat "$POS_FILE" 2>/dev/null || echo 0)
-    last=$(cat "$TIME_FILE" 2>/dev/null || echo 0)
-    color_idx=$(cat "$COLOR_FILE" 2>/dev/null || echo 0)
-    now=$(date +%s%N)
+    # Use bash read builtin - no process spawn
+    read -r count < "$COUNT_FILE" 2>/dev/null || count=0
+    read -r pos < "$POS_FILE" 2>/dev/null || pos=0
+    read -r last < "$TIME_FILE" 2>/dev/null || last=0
+    read -r color_idx < "$COLOR_FILE" 2>/dev/null || color_idx=0
+
+    # Bash 5.0+ has EPOCHREALTIME (no spawn)
+    now=${EPOCHREALTIME%%.*}${EPOCHREALTIME#*.}
 
     pos=$((pos % 3))
     case $pos in 0) pattern="● ○ ○"; ;; 1) pattern="○ ● ○"; ;; 2) pattern="○ ○ ●"; ;; esac
@@ -26,15 +34,19 @@ while true; do
     if [ "$last" != "0" ]; then
         diff=$(( (now - last) / 1000000 ))
         if [ "$diff" -lt 100 ]; then
-            # 打字时：实心方框 + 明亮颜色
-            printf '{"text":"■  %d  %s","class":"t%d"}\n' "$count" "$pattern" "$color_idx"
+            output=$(printf '{"text":"■  %d  %s","class":"t%d"}' "$count" "$pattern" "$color_idx")
         else
-            # 不打字：空心方框 + 暗淡颜色
-            printf '{"text":"□  %d  %s","class":"i%d"}\n' "$count" "$pattern" "$color_idx"
+            output=$(printf '{"text":"□  %d  %s","class":"i%d"}' "$count" "$pattern" "$color_idx")
         fi
     else
-        printf '{"text":"□  %d  %s","class":"i%d"}\n' "$count" "$pattern" "$color_idx"
+        output=$(printf '{"text":"□  %d  %s","class":"i%d"}' "$count" "$pattern" "$color_idx")
     fi
 
-    sleep 0.03
+    # Only output if changed (Waybar doesn't need constant updates)
+    if [ "$output" != "$last_output" ]; then
+        printf '%s\n' "$output"
+        last_output="$output"
+    fi
+
+    sleep 0.1
 done
