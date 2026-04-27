@@ -28,7 +28,7 @@ while true; do
 
     if [ "$last" != "0" ]; then
         diff=$(( (now - last) / 1000000 ))
-        if [ "$diff" -lt 100 ]; then
+        if [ "$diff" -lt 50 ]; then
             output=$(printf '{"text":"■  %d  %s","class":"t%d"}' "$count" "$pattern" "$color_idx")
         else
             output=$(printf '{"text":"□  %d  %s","class":"i%d"}' "$count" "$pattern" "$color_idx")
@@ -40,5 +40,5 @@ while true; do
     # Always output (Waybar handles updates)
     printf '%s\n' "$output"
 
-    sleep 0.1
+    sleep 0.05
 done
