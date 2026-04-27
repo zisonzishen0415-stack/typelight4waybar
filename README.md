@@ -119,9 +119,14 @@ Reload Sway: `Mod+Shift+C`
 
 TypeLight includes a Waybar module that displays:
 
-- **Typing state indicator (方框)**: Shows `▢` (grey/hollow) when idle, `▣` (highlighted/filled) when typing
+- **Typing state indicator**: Shows `█` (full block) when typing, `░` (light shade) when idle
 - **Keystroke count**: Total number of keypresses since start
 - **Wave animation**: `● ○ ○` / `○ ● ○` / `○ ○ ●` cycles with each keystroke
+
+The module is optimized for low CPU usage (~0%):
+- Uses bash `read` builtin instead of spawning `cat`
+- 50ms sleep interval, 100ms typing detection threshold
+- Single instance lock via `flock`
 
 **Install Waybar module:**
 
@@ -141,6 +146,8 @@ ln -sf ~/development/typelight/waybar-module.sh ~/.config/waybar/scripts/typelig
 
 **Add CSS styles (`~/.config/waybar/style.css`):**
 
+The module uses dynamic classes: `t0`-`t63` (typing) and `i0`-`i63` (idle) for color cycling. Example:
+
 ```css
 #custom-typelight {
     padding: 0 8px;
@@ -148,13 +155,15 @@ ln -sf ~/development/typelight/waybar-module.sh ~/.config/waybar/scripts/typelig
     font-size: 16px;
 }
 
-#custom-typelight.idle {
-    color: #4c566a;  /* Grey - not typing */
+/* Typing state - bright colors */
+#custom-typelight.t0, #custom-typelight.t1, #custom-typelight.t2 {
+    color: #88c0d0;
+    font-weight: bold;
 }
 
-#custom-typelight.typing {
-    color: #88c0d0;  /* Highlighted - typing */
-    font-weight: bold;
+/* Idle state - dim colors */
+#custom-typelight.i0, #custom-typelight.i1, #custom-typelight.i2 {
+    color: #4c566a;
 }
 ```
 
