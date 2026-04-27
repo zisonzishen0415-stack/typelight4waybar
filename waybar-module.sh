@@ -41,12 +41,12 @@ while true; do
     if [ "$last" != "0" ]; then
         diff=$(( (now - last) / 1000000 ))
         if [ "$diff" -lt 100 ]; then
-            output=$(printf '{"text":"■  %d  %s","class":"t%d"}' "$count" "$pattern" "$color_idx")
+            output=$(printf '{"text":" █  %d  %s","class":"t%d"}' "$count" "$pattern" "$color_idx")
         else
-            output=$(printf '{"text":"□  %d  %s","class":"i%d"}' "$count" "$pattern" "$color_idx")
+            output=$(printf '{"text":" ░  %d  %s","class":"i%d"}' "$count" "$pattern" "$color_idx")
         fi
     else
-        output=$(printf '{"text":"□  %d  %s","class":"i%d"}' "$count" "$pattern" "$color_idx")
+        output=$(printf '{"text":" ░  %d  %s","class":"i%d"}' "$count" "$pattern" "$color_idx")
     fi
 
     # Always output (Waybar handles updates)
